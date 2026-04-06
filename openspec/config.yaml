@@ -21,7 +21,7 @@ context: |
       - Sổ – Tập
       - Kéo – Dao rọc giấy
       - Dụng cụ khác
-    - KHÔNG có tính năng Đăng nhập, Đăng ký hay Quản lý tài khoản.
+    - Cho phép vẽ các nút bấm rỗng (mock UI buttons) cho: Đăng nhập, Đăng ký, Quản lý tài khoản, Xóa tài khoản để tăng tính chân thực của giao diện bề mặt. Tuy nhiên, TUYỆT ĐỐI KHÔNG code tính năng xác thực, không lưu user xuống DB (Zero backend logic cho user).
     - Admin Panel hỗ trợ thực hiện CRUD (Xem, Thêm, Sửa, Xóa) trên Danh mục và Sản phẩm.
     - Ràng buộc Xóa (Data Validation): Không cho phép xóa Danh mục nếu đang chứa Sản phẩm. Không cho phép xóa Sản phẩm nếu nó đang tồn tại trong một Đơn hàng bất kỳ.
 
