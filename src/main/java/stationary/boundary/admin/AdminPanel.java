@@ -3,7 +3,6 @@ package stationary.boundary.admin;
 import stationary.control.AdminInventoryControl;
 import stationary.entity.Category;
 import stationary.entity.Product;
-import stationary.store.InMemoryStore;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,7 +33,7 @@ public class AdminPanel extends JPanel {
 
         delCatBtn.addActionListener(e -> {
             try {
-                List<Category> cats = InMemoryStore.getInstance().getCategories();
+                List<Category> cats = control.getCategories();
                 if(!cats.isEmpty()) {
                     control.deleteCategory(cats.get(0).getId());
                     JOptionPane.showMessageDialog(this, "Xóa thành công!");
@@ -46,7 +45,7 @@ public class AdminPanel extends JPanel {
         
         delProdBtn.addActionListener(e -> {
             try {
-                List<Product> prods = InMemoryStore.getInstance().getProducts();
+                List<Product> prods = control.getProducts();
                 if(!prods.isEmpty()) {
                     control.deleteProduct(prods.get(0).getId());
                     JOptionPane.showMessageDialog(this, "Xóa thành công!");

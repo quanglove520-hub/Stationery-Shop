@@ -40,4 +40,12 @@ public class AdminInventoryControl {
         InMemoryStore.getInstance().removeProduct(productId);
         return true;
     }
+
+    public List<Category> getCategories() {
+        return InMemoryStore.getInstance().getCategories();
+    }
+
+    public List<Product> getProducts() {
+        return InMemoryStore.getInstance().getProducts();
+    }
 }
