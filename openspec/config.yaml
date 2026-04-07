@@ -1,0 +1,53 @@
+name: stationary
+schema: spec-driven
+
+context: |
+  Ngôn ngữ artifact: Tiếng Việt, giữ nguyên tiếng Anh cho technical terms: code, test, class, method, variable, ...
+
+  Kiến trúc: 
+    - Standalone desktop application
+    - Boundary - Control - Entity: Boundary (UI, Input/output), Control (Business logic), Entity (Business rules).
+    - Quy tắc BCE: Boundary KHÔNG ĐƯỢC phép chứa Business Logic hay gọi trực tiếp Entity, mọi giao tiếp phải đi qua Control.
+    
+  Domain: Mô phỏng website for introducing and selling stationary online. 
+  Phạm vi: stationary Business, Core stationary Business ở mức đơn giản.
+
+  Simulator: 
+    - trang chủ hiển thị các danh mục sản phẩm dạng grid(lưới), mỗi danh mục là một card gồm icon + tên, tương tự giao diện website bán hàng.
+    - Các danh mục gồm:
+      - Bìa – Kệ hồ sơ
+      - Giấy
+      - Bút – Viết
+      - Sổ – Tập
+      - Kéo – Dao rọc giấy
+      - Dụng cụ khác
+    - Cho phép vẽ các nút bấm rỗng (mock UI buttons) cho: Đăng nhập, Đăng ký, Quản lý tài khoản, Xóa tài khoản để tăng tính chân thực của giao diện bề mặt. Tuy nhiên, TUYỆT ĐỐI KHÔNG code tính năng xác thực, không lưu user xuống DB (Zero backend logic cho user).
+    - Admin Panel hỗ trợ thực hiện CRUD (Xem, Thêm, Sửa, Xóa) trên Danh mục và Sản phẩm.
+    - Ràng buộc Xóa (Data Validation): Không cho phép xóa Danh mục nếu đang chứa Sản phẩm. Không cho phép xóa Sản phẩm nếu nó đang tồn tại trong một Đơn hàng bất kỳ.
+
+  Tech stack:
+    - Language: Java
+    - GUI: Java Swing
+    - Database: In-Memory Database
+    - Testing: BDD Cucumber, JUnit
+
+rules:
+  proposal:
+    - Ghi rõ ràng phạm vi (scope) và những gì không nằm trong phạm vi (non-goals)
+  specs:
+    - Xác định yêu cầu bằng User Story
+    - Mỗi change/proposal tương ứng với một User Story theo format As a <role>, I want <goal>, so that <benefit>
+    - User story phải đảm bảo tiêu chí INVEST (Independent, Negotiable, Valuable, Estimable, Small, Testable).
+    - Mỗi User Story là một feature — một lát cắt mỏng dọc (thin vertical slice) xuyên qua các layers ngang (Boundary → Control → Entity) của hệ thống.
+    - Đặc tả hành vi từ góc nhìn Business, KHÔNG dùng góc nhìn Technical
+    - Dùng format GIVEN/WHEN/THEN cho scenarios
+    - Bao gồm đầy đủ Unhappy Path (error cases, edge cases, validation failures)
+    - Scenarios phải ánh xạ được sang Cucumber steps
+  design:
+    - Mô tả rõ class diagram hoặc quan hệ giữa các components
+    - sequence diagram cho happy path
+    - gợi ý cấu trúc project, package
+    - Ghi rõ data model cho in-memory storage
+  tasks:
+    - Viết code Acceptance Test (BDD Cucumber) trước
+    - Sau đó viết code cho Control, Entity + Unit Test để đáp ứng Acceptance Test

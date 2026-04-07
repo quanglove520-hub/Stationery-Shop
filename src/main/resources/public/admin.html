@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stationary Admin Panel</title>
+    <link rel="stylesheet" href="admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <h2 class="admin-logo">Admin <span>Panel</span></h2>
+            <nav class="admin-nav">
+                <a href="#" class="nav-item active" onclick="showTab('categories')">📁 Quản lý Danh mục</a>
+                <a href="#" class="nav-item" onclick="showTab('products')">📦 Quản lý Sản phẩm</a>
+            </nav>
+            <a href="/" class="back-home">⬅ Về Trang Khách</a>
+        </aside>
+
+        <main class="admin-content">
+            <!-- Categories Tab -->
+            <section id="categories-tab" class="tab-content active">
+                <div class="content-header">
+                    <h2>Danh sách Danh mục</h2>
+                    <button class="btn-primary" onclick="openCatModal()">+ Thêm Danh Mục</button>
+                </div>
+                <div class="table-container">
+                    <table id="catTable">
+                        <thead>
+                            <tr><th>Mã (ID)</th><th>Tên Danh mục</th><th>Icon</th><th>Hành động</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Products Tab -->
+            <section id="products-tab" class="tab-content">
+                <div class="content-header">
+                    <h2>Danh sách Sản phẩm</h2>
+                    <button class="btn-primary" onclick="openProdModal()">+ Thêm Sản Phẩm</button>
+                </div>
+                <div class="table-container">
+                    <table id="prodTable">
+                        <thead>
+                            <tr><th>Mã (ID)</th><th>Tên SP</th><th>Thuộc danh mục</th><th>Giá</th><th>Kho</th><th>Hành động</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Category Modal -->
+    <div id="catModal" class="modal">
+        <div class="modal-content">
+            <h3 id="catModalTitle">Thêm Danh Mục</h3>
+            <div class="form-group">
+                <label>Mã Danh Mục:</label>
+                <input type="text" id="catId" placeholder="VD: C10">
+            </div>
+            <div class="form-group">
+                <label>Tên Danh Mục:</label>
+                <input type="text" id="catName" placeholder="VD: Tập Vở">
+            </div>
+            <div class="form-group">
+                <label>Icon (Emoji):</label>
+                <input type="text" id="catIcon" placeholder="VD: 📓">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModals()">Hủy</button>
+                <button class="btn-primary" onclick="saveCategory()">Lưu Lại</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div id="prodModal" class="modal">
+        <div class="modal-content">
+            <h3 id="prodModalTitle">Thêm Sản Phẩm</h3>
+            <div class="form-group">
+                <label>Mã Sản Phẩm:</label>
+                <input type="text" id="prodId" placeholder="VD: P501">
+            </div>
+            <div class="form-group">
+                <label>Chọn Danh Mục:</label>
+                <select id="prodCatId"></select>
+            </div>
+            <div class="form-group">
+                <label>Tên Sản Phẩm:</label>
+                <input type="text" id="prodName">
+            </div>
+            <div class="form-group">
+                <label>Giá Bán (đ):</label>
+                <input type="number" id="prodPrice">
+            </div>
+            <div class="form-group">
+                <label>Số lượng tồn:</label>
+                <input type="number" id="prodStock">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModals()">Hủy</button>
+                <button class="btn-primary" onclick="saveProduct()">Lưu Lại</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stationary Simulator</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="glass-nav">
+        <div class="logo">Stationary <span>Simulator</span></div>
+        <div class="nav-actions">
+            <a href="admin.html" class="nav-btn outline" style="text-decoration:none; color:black; border-color:black;">⚙️ Góc Quản Trị</a>
+            <button class="nav-btn" onclick="openCart()">
+                🛒 Giỏ Hàng <span id="cartBadge" class="badge">0</span>
+            </button>
+            <button class="nav-btn outline" onclick="alert('Simulator: Chưa hỗ trợ luồng Đăng Ký Backend')">Đăng Ký</button>
+            <button class="nav-btn primary" onclick="alert('Simulator: Chưa hỗ trợ Auth Backend')">Đăng Nhập</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <aside class="sidebar">
+            <h2 class="section-title">Danh Mục</h2>
+            <div id="categoryList" class="category-list">
+                <!-- Fetch from API -->
+            </div>
+        </aside>
+        
+        <section class="content">
+            <div class="title-bar">
+                <h2 class="section-title" id="contentTitle">Sản Phẩm Nổi Bật</h2>
+                <div class="search-bar">
+                    <input type="text" placeholder="Tìm kiếm sản phẩm...">
+                </div>
+            </div>
+            
+            <div id="productGrid" class="product-grid">
+                <!-- Fetch from API -->
+                <div class="empty-state">Vui lòng chọn một danh mục bên trái</div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Slide-over Cart Panel -->
+    <div id="cartOverlay" class="cart-overlay" onclick="closeCart()"></div>
+    <div id="cartPanel" class="cart-panel glass-panel">
+        <div class="cart-header">
+            <h2>🛒 Giỏ Hàng Của Bạn</h2>
+            <button class="close-btn" onclick="closeCart()">✕</button>
+        </div>
+        
+        <div id="cartItems" class="cart-items">
+            <!-- Inserted by JS -->
+        </div>
+        
+        <div class="cart-footer">
+            <div class="total-row">
+                <span>Tổng tiền:</span>
+                <span id="cartTotal" class="total-price">0 đ</span>
+            </div>
+            <button class="checkout-btn" onclick="checkout()"><span class="btn-text">💸 THANH TOÁN NGAY</span></button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">Đã thêm vào giỏ hàng!</div>
+
+    <script src="app.js"></script>
+</body>
+</html>

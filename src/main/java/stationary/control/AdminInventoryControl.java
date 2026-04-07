@@ -17,6 +17,14 @@ public class AdminInventoryControl {
         InMemoryStore.getInstance().addProduct(new Product(id, categoryId, name, price, stock));
     }
 
+    public void updateCategory(String id, String name, String iconPath) {
+        InMemoryStore.getInstance().updateCategory(new Category(id, name, iconPath));
+    }
+
+    public void updateProduct(String id, String categoryId, String name, double price, int stock) {
+        InMemoryStore.getInstance().updateProduct(new Product(id, categoryId, name, price, stock));
+    }
+
     public boolean deleteCategory(String categoryId) {
         List<Product> products = InMemoryStore.getInstance().getProducts();
         for (Product p : products) {
@@ -39,5 +47,13 @@ public class AdminInventoryControl {
         }
         InMemoryStore.getInstance().removeProduct(productId);
         return true;
+    }
+
+    public List<Category> getCategories() {
+        return InMemoryStore.getInstance().getCategories();
+    }
+
+    public List<Product> getProducts() {
+        return InMemoryStore.getInstance().getProducts();
     }
 }
