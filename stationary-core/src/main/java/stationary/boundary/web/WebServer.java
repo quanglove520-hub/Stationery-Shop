@@ -43,6 +43,38 @@ public class WebServer {
             return p;
         }, gson::toJson);
 
+        get("/api/v1/products", (req, res) -> {
+            res.type("application/json");
+            String pageStr = req.queryParams("page");
+            String sizeStr = req.queryParams("size");
+            String search = req.queryParams("search");
+            int page = pageStr != null ? Integer.parseInt(pageStr) : 0;
+            int size = sizeStr != null ? Integer.parseInt(sizeStr) : 10;
+            return catalogControl.getAllProducts(search, page, size);
+        }, gson::toJson);
+
+        get("/api/v1/products/:id", (req, res) -> {
+            res.type("application/json");
+            Product p = catalogControl.getProductById(req.params(":id"));
+            if(p == null) {
+                res.status(404);
+                return "{\"error\":\"Not found\"}";
+            }
+            return p;
+        }, gson::toJson);
+
+        post("/api/v1/products/seed", (req, res) -> {
+            res.type("application/json");
+            catalogControl.seedProducts();
+            return "{\"status\":\"ok\", \"message\":\"Seeded Data\"}";
+        });
+
+        delete("/api/v1/products/clear", (req, res) -> {
+            res.type("application/json");
+            catalogControl.clearProducts();
+            return "{\"status\":\"ok\", \"message\":\"Cleared Data. You can test NO DATA scenario.\"}";
+        });
+
         // API Cart
         get("/api/cart", (req, res) -> {
             res.type("application/json");

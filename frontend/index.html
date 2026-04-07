@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stationery Shop - Đồ dùng văn phòng phẩm</title>
+    <meta name="description" content="Khám phá và mua sắm đồ dùng học tập, văn phòng phẩm chất lượng cao với thiết kế hiện đại.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Thư viện Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="glass-header">
+        <div class="logo">
+            <span class="material-icons-outlined">edit</span>
+            <h1>Stationery<span class="highlight">Glow</span></h1>
+        </div>
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Tìm kiếm văn phòng phẩm...">
+            <button id="searchBtn"><span class="material-icons-outlined">search</span></button>
+        </div>
+        <nav>
+            <!-- Navigation items for Production can go here in the future -->
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="section-title">
+            <h2>Khám phá mặt hàng</h2>
+        </div>
+        
+        <!-- Loading State -->
+        <div id="loadingState" class="state-container">
+            <div class="spinner"></div>
+            <p>Đang tải dữ liệu từ máy chủ...</p>
+        </div>
+
+        <!-- Product Grid (Happy Path) -->
+        <div id="productGrid" class="grid hidden">
+            <!-- Sản phẩm sẽ được render dựa vào app.js -->
+        </div>
+
+        <!-- Empty State (Unhappy Path - No Data) -->
+        <div id="emptyState" class="state-container hidden">
+            <div class="empty-icon">
+                <span class="material-icons-outlined">sentiment_dissatisfied</span>
+            </div>
+            <h3>NO DATA - Không có dữ liệu</h3>
+            <p>Hiện không tìm thấy sản phẩm văn phòng phẩm nào phù hợp.</p>
+        </div>
+    </main>
+
+    <!-- Product Detail Modal Popup -->
+    <div id="productModal" class="modal-overlay hidden">
+        <div class="modal-content glassmorphism">
+            <button id="closeModal" class="close-btn"><span class="material-icons-outlined">close</span></button>
+            <div class="modal-body" id="modalBody">
+                <!-- Nội dung chi tiết render qua JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>
