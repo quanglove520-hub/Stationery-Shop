@@ -49,6 +49,10 @@ public class InMemoryStore {
         orders.clear();
     }
 
+    public void clearProducts() {
+        products.clear();
+    }
+
     public List<Category> getCategories() { return categories; }
     public List<Product> getProducts() { return products; }
     public List<Order> getOrders() { return orders; }
