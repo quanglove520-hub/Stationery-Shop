@@ -1,6 +1,22 @@
+# Node
+node_modules/
+.npm/
+
+# Maven
 target/
-*.class
 *.jar
+*.war
+*.ear
+*.class
+
+# IDE
 .idea/
 *.iml
 .vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
