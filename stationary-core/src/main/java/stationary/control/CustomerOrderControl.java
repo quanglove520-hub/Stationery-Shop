@@ -10,11 +10,11 @@ import java.util.Optional;
 
 public class CustomerOrderControl {
     private Order currentCart;
-    private CatalogControl catalogControl;
+    // private CatalogControl catalogControl;
 
     public CustomerOrderControl() {
         this.currentCart = new Order("CART-SESSION", new ArrayList<>());
-        this.catalogControl = new CatalogControl();
+        // this.catalogControl = new CatalogControl();
     }
 
     public void addToCart(String productId, int quantity) {
@@ -37,7 +37,7 @@ public class CustomerOrderControl {
     public double calculateTotal() {
         double total = 0;
         for (OrderLineItem item : currentCart.getItems()) {
-            Product p = catalogControl.getProductById(item.getProductId());
+            Product p = null; // catalogControl.getProductById(item.getProductId());
             if (p != null) {
                 total += p.getPrice() * item.getQuantity();
             }

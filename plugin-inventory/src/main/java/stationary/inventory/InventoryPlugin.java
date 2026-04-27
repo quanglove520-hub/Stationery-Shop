@@ -24,6 +24,7 @@ public class InventoryPlugin implements StationaryPlugin {
     public void onInitData(MemoryDB db) {
         adminControl = new AdminInventoryControl();
         catalogControl = new CatalogControl();
+        catalogControl.seedProducts();
         gson = new Gson();
         // Currently data is still using legacy InMemoryStore via AdminInventoryControl internally.
         // We can just leave it as is for now to ensure BCE and tests stay intact.
@@ -41,7 +42,16 @@ public class InventoryPlugin implements StationaryPlugin {
         get("/api/products", (req, res) -> {
             res.type("application/json");
             String catId = req.queryParams("categoryId");
-            return catalogControl.getProductsByCategory(catId);
+            String search = req.queryParams("search");
+            String sort = req.queryParams("sort");
+            int page = 0;
+            int size = 12;
+            try {
+                if (req.queryParams("page") != null) page = Integer.parseInt(req.queryParams("page"));
+                if (req.queryParams("size") != null) size = Integer.parseInt(req.queryParams("size"));
+            } catch (Exception e) {}
+            
+            return catalogControl.getAllProducts(catId, search, sort, page, size);
         }, gson::toJson);
 
         get("/api/products/:id", (req, res) -> {

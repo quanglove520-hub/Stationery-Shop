@@ -1,33 +1,202 @@
-const API_BASE_URL = 'http://localhost:8080/api/v1';
+const API_BASE_URL = 'http://localhost:4567/api';
 
 // Các Element DOM
 const productGrid = document.getElementById('productGrid');
 const emptyState = document.getElementById('emptyState');
 const loadingState = document.getElementById('loadingState');
+const infiniteScrollTrigger = document.getElementById('infiniteScrollTrigger');
 const searchInput = document.getElementById('searchInput');
 const searchBtn = document.getElementById('searchBtn');
 const productModal = document.getElementById('productModal');
 const closeModal = document.getElementById('closeModal');
 const modalBody = document.getElementById('modalBody');
+const toast = document.getElementById('toast');
 
-// Biến toàn cục để giả lập trạng thái cho phiên bản MOCK
-window.MOCK_DATA_ADDED = true;
-window.MOCK_DATA_CLEARED = false;
+// Cart Elements
+const cartOverlay = document.getElementById('cartOverlay');
+const cartPanel = document.getElementById('cartPanel');
+const cartItemsContainer = document.getElementById('cartItems');
+const cartBadge = document.getElementById('cartBadge');
+const cartTotalElement = document.getElementById('cartTotal');
+const discountCodeInput = document.getElementById('discountCode');
+const discountMessageElement = document.getElementById('discountMessage');
 
-// Render dữ liệu Product Grid
-function renderProducts(products) {
-    productGrid.innerHTML = ''; // Clear danh sách cũ
+// State biến toàn cục
+let currentPage = 0;
+let currentSearch = '';
+let currentCategory = 'all';
+let currentSort = '';
+let isFetching = false;
+let hasMoreData = true;
+let allLoadedProducts = []; // Lưu lại để dùng cho Related products
+
+let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+let cart = JSON.parse(localStorage.getItem('cart')) || [];
+let currentDiscount = 0;
+
+// Khởi tạo ứng dụng
+window.onload = () => {
+    fetchProducts(true);
+    setupIntersectionObserver();
+    updateCartUI();
+};
+
+/* =========================================
+   Wishlist & Toast Logic
+========================================= */
+function showToast(message) {
+    toast.textContent = message;
+    toast.classList.add('show');
+    toast.classList.remove('hidden');
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+function toggleWishlist(e, productId) {
+    e.stopPropagation(); // Ngăn sự kiện click lan ra thẻ card
+    const index = wishlist.indexOf(productId);
+    
+    if (index === -1) {
+        wishlist.push(productId);
+        showToast("Đã thêm vào yêu thích ❤");
+    } else {
+        wishlist.splice(index, 1);
+        showToast("Đã bỏ khỏi yêu thích 🤍");
+    }
+    
+    localStorage.setItem('wishlist', JSON.stringify(wishlist));
+    
+    // Tìm button và toggle class
+    const btn = e.currentTarget;
+    btn.classList.toggle('active');
+}
+
+/* =========================================
+   Cart & Discount Logic
+========================================= */
+function openCart() {
+    cartOverlay.classList.add('active');
+    cartOverlay.classList.remove('hidden');
+    cartPanel.classList.add('active');
+    cartPanel.classList.remove('hidden');
+    updateCartUI();
+}
+
+function closeCart() {
+    cartOverlay.classList.remove('active');
+    cartPanel.classList.remove('active');
+    setTimeout(() => {
+        cartOverlay.classList.add('hidden');
+        cartPanel.classList.add('hidden');
+    }, 300);
+}
+
+function addToCart(productJson) {
+    const product = JSON.parse(decodeURIComponent(productJson));
+    const exist = cart.find(item => item.id === product.id);
+    if (exist) {
+        exist.quantity += 1;
+    } else {
+        cart.push({ ...product, quantity: 1 });
+    }
+    localStorage.setItem('cart', JSON.stringify(cart));
+    showToast("Đã thêm vào giỏ hàng 🛒");
+    updateCartUI();
+}
+
+function removeFromCart(id) {
+    cart = cart.filter(item => item.id !== id);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartUI();
+}
+
+function applyDiscount() {
+    const code = discountCodeInput.value.trim().toUpperCase();
+    if (code === 'SALE10') {
+        currentDiscount = 0.10; // Giảm 10%
+        discountMessageElement.textContent = "Áp dụng thành công mã SALE10 giảm 10%!";
+        discountMessageElement.style.color = '#4ade80';
+    } else {
+        currentDiscount = 0;
+        discountMessageElement.textContent = "Mã giảm giá không hợp lệ hoặc đã hết hạn!";
+        discountMessageElement.style.color = '#ef4444';
+    }
+    updateCartUI();
+}
+
+function updateCartUI() {
+    // Render list
+    cartItemsContainer.innerHTML = '';
+    let subtotal = 0;
+    
+    cart.forEach(item => {
+        subtotal += item.price * item.quantity;
+        const priceFmt = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price);
+        
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        div.innerHTML = `
+            <img src="${item.imageUrl}" alt="${item.name}">
+            <div class="cart-item-info">
+                <h4>${item.name}</h4>
+                <div class="cart-item-price">${priceFmt} x ${item.quantity}</div>
+                <button class="remove-btn" onclick="removeFromCart(${item.id})">Xóa</button>
+            </div>
+        `;
+        cartItemsContainer.appendChild(div);
+    });
+
+    if (cart.length === 0) {
+        cartItemsContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; margin-top: 2rem;">Giỏ hàng trống</p>';
+    }
+
+    // Tính toán giảm giá & Render Badge
+    const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+    cartBadge.textContent = cartCount;
+
+    const total = subtotal * (1 - currentDiscount);
+    cartTotalElement.textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total);
+}
+
+function checkout() {
+    if(cart.length === 0) return showToast("Giỏ hàng đang trống!");
+    showToast("Đang tiến hành thanh toán...");
+    setTimeout(() => {
+        cart = [];
+        localStorage.setItem('cart', JSON.stringify([]));
+        currentDiscount = 0;
+        discountMessageElement.textContent = "";
+        updateCartUI();
+        closeCart();
+        alert("Thanh toán thành công! Cảm ơn bạn.");
+    }, 1000);
+}
+
+/* =========================================
+   Product Grid & Fetch Logic
+========================================= */
+function formatPrice(amount) {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+}
+
+function renderProducts(products, append = false) {
+    if (!append) productGrid.innerHTML = '';
     
     products.forEach(product => {
+        const isWished = wishlist.includes(product.id);
         const card = document.createElement('div');
         card.className = 'card';
         card.onclick = () => openProductDetail(product);
         
-        const priceFmt = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price);
+        const priceFmt = formatPrice(product.price);
 
         card.innerHTML = `
-            <img src="${product.imageUrl}" alt="${product.name}" class="card-img">
-            <span class="card-category">${product.category}</span>
+            <img src="${product.imageUrl}" alt="${product.name}" class="card-img" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
+            <button class="wishlist-btn ${isWished ? 'active' : ''}" onclick="toggleWishlist(event, ${product.id})">
+                <span class="material-icons-outlined">favorite</span>
+            </button>
+            <span class="card-category">${product.categoryId}</span>
             <div class="card-title">${product.name}</div>
             <div class="card-footer">
                 <span class="card-price">${priceFmt}</span>
@@ -38,88 +207,285 @@ function renderProducts(products) {
     });
 }
 
-// Yêu cầu (Request) fetch Products từ API Server
-async function fetchProducts(search = '') {
-    showState('loading');
+// Hàm Fetch có hỗ trợ phân trang
+async function fetchProducts(isFirstLoad = false, search = '') {
+    if (isFetching || (!hasMoreData && !isFirstLoad)) return;
+    
+    if (isFirstLoad) {
+        currentPage = 0;
+        currentSearch = search;
+        hasMoreData = true;
+        allLoadedProducts = [];
+        showState('loading');
+    } else {
+        infiniteScrollTrigger.classList.remove('hidden');
+    }
+
+    isFetching = true;
     
     try {
-        const url = search ? `${API_BASE_URL}/products?search=${encodeURIComponent(search)}` : `${API_BASE_URL}/products`;
+        const url = new URL(`${API_BASE_URL}/products`);
+        url.searchParams.append('page', currentPage);
+        url.searchParams.append('size', 12); // Lấy 12 item / trang mỗi lần lướt
+        if (currentSearch) url.searchParams.append('search', currentSearch);
+        if (currentCategory && currentCategory !== 'all') url.searchParams.append('categoryId', currentCategory);
+        if (currentSort) url.searchParams.append('sort', currentSort);
+
         const response = await fetch(url);
-        
         if (!response.ok) throw new Error('API failed');
 
         const data = await response.json();
         const products = data.content;
+        
+        allLoadedProducts = isFirstLoad ? products : [...allLoadedProducts, ...products];
 
-        // Xử lý Business Logic: Yêu cầu hiển thị NO DATA
-        if (products.length === 0) {
+        if (products.length < 12) {
+            hasMoreData = false; // Đã hết layout
+            infiniteScrollTrigger.classList.add('hidden');
+        }
+
+        if (isFirstLoad && products.length === 0) {
             showState('empty');
         } else {
-            renderProducts(products);
+            renderProducts(products, !isFirstLoad); // Thêm nối cào cuối lưới
             showState('data');
+            currentPage++;
         }
     } catch (error) {
-        console.error("Lỗi gọi API hoặc máy chủ chưa sẵn sàng:", error);
-        const mockProducts = [
-            { id:1, name: "Bút bi Thiên Long", category: "Pen", price: 5000, stock: 1000, description: "Bút bi xanh chính hãng Thiên Long TL-027. Đầu bi 0.5mm nét thanh, mực ra đều trơn tru, không ứ đọng. Thân vỏ nhựa trong suốt cường lực, thiết kế tinh tế tiện dụng cho việc học tập và ký tá tài liệu văn phòng.", imageUrl: "https://vanphong-pham.com/wp-content/uploads/2018/12/but-bi-thien-long-TL-027.jpg" },
-            { id:2, name: "Sổ tay da cao cấp", category: "Notebook", price: 150000, stock: 50, description: "Sổ tay bìa da thật cao cấp, thiết kế mộc mạc đường chỉ may tay tinh xảo. Có dây chun cài sổ chắc chắn. Lõi giấy màu kem chống lóa chuẩn châu Âu, định lượng 100gsm không bị thấm mực, thích hợp cho doanh nhân.", imageUrl: "https://www.xuongsanxuatsoda.com/wp-content/uploads/2025/06/so-tay-bia-da-that-xuongsanxuatsoda.com_.jpg" },
-            { id:3, name: "Tẩy Gôm Trắng Pentel", category: "Eraser", price: 12000, stock: 200, description: "Gôm tẩy Pentel HI-POLYMER siêu sạch, siêu mềm. Tẩy dẻo không làm rách hay sờn bề mặt giấy, không để lại nhiều mạt cao su. An toàn không chứa chất độc hại, thân thiện môi trường dành cho học sinh.", imageUrl: "https://tse4.mm.bing.net/th/id/OIP.2XVHpnU7StA1XLaB5Ni3gQHaHa?pid=Api&P=0&h=180" },
-            { id:4, name: "Balo sinh viên đa năng", category: "Bag", price: 350000, stock: 10, description: "Balo thiết kế unisex năng động. Vải trượt nước Oxford cao cấp chống mưa nhẹ. Có ngăn vách lót chống sốc đựng vừa Laptop 15.6 inch. Khóa kéo mượt mà, phân bổ nhiều ngăn nhỏ tiện dụng cho việc đựng tài liệu và đồ dùng học tập.", imageUrl: "https://tse2.mm.bing.net/th/id/OIP.yCt8azYLsyKFz4Wf6S9wEAHaHa?pid=Api&P=0&h=180" },
-            { id:5, name: "Hộp bút màu HB", category: "Pencil", price: 45000, stock: 120, description: "Set hộp chì màu chuyên dụng tô phác họa nghệ thuật, vỏ gỗ chống gãy lõi. Chất chì tiêu chuẩn HB, màu tô êm ái, bám giấy tốt giúp tô mảng rộng không bị sần. Mang lại các phối màu tự nhiên rực rỡ.", imageUrl: "https://tse4.mm.bing.net/th/id/OIP.d3O1T8r7xf2m3VtIWiU3KwHaHa?pid=Api&P=0&h=180" },
-            { id:6, name: "Kéo thủ công Deli", category: "Accessories", price: 25000, stock: 80, description: "Kéo cắt thủ công Deli, lưỡi kéo bằng thép không gỉ nguyên khối sắc bén. Cán cầm nhựa đúc bọc cao su chống trơn trượt cầm rất êm tay. Sản phẩm phù hợp cho việc cắt giấy, decan, băng keo mà không dính lưỡi.", imageUrl: "https://tse2.mm.bing.net/th/id/OIP.4Tbbhn8hXgP_faYzs-PVzAHaHa?pid=Api&P=0&h=180" },
-            { id:7, name: "Thước 20cm nhôm", category: "Ruler", price: 15000, stock: 300, description: "Thước kẻ độ dài 20cm từ nhôm định hình hợp kim siêu nhẹ nhưng cực kì bền, không độc hại gỉ sét. Các vạch phân chia cm/mm được khắc chìm tinh tế chính xác, mực chống xước trọn đời không lo phai vạch.", imageUrl: "https://tse3.mm.bing.net/th/id/OIP.I4E-dZQ6tnloNTR3sRqK4QHaHa?pid=Api&P=0&h=180" },
-            { id:8, name: "Đinh ghim kẹp giấy", category: "Accessories", price: 35000, stock: 150, description: "Hộp đồ dùng tổng hợp đinh ghim bảng và kẹp giấy. Sử dụng chất liệu kim loại bọc lớp nhựa bóng đa sắc giúp tổng hợp các trang tài liệu lại thành mảng, tránh thất lạc. Ghim có đầu cắm bảo vệ an toàn.", imageUrl: "https://tse3.mm.bing.net/th/id/OIP.5yarAQS4DrxGOefGPrEM3wHaHa?pid=Api&P=0&h=180" },
-            { id:9, name: "Hộp lưu trữ Desktop", category: "Organizer", price: 120000, stock: 30, description: "Hộp kệ mini sắp xếp đồ lưu trữ đa năng cho Desktop. Thiết kế tầng kệ xếp chéo chia hộc giúp phân loại từ bút, gôm, kẹp cạp, phone. Setup góc văn phòng chuẩn phong cách tối giản gọn gàng, tăng cảm hứng làm việc.", imageUrl: "https://tse1.mm.bing.net/th/id/OIP.Oc34zpLTh_YjKsCyluPdWQHaHa?pid=Api&P=0&h=180" },
-            { id:10, name: "Sổ tay ghi chú lò xo", category: "Notebook", price: 25000, stock: 400, description: "Sổ caro gáy lò xo xoắn ốc kép dày dặn và cực kỳ chắc tay. Cho phép lật mở 360 độ hoặc xé trang giấy ghi nháp mà hoàn toàn không ảnh hưởng gáy sổ cuốn. Lưới kẻ caro nhẹ dịu phù hợp với môn tư duy toán học lập trình.", imageUrl: "https://tse4.mm.bing.net/th/id/OIP.7t3kAcBf9JDnD2SZ9KwUqgHaHa?pid=Api&P=0&h=180" }
-        ];
-        
-        // Giả lập trạng thái từ Biến toàn cục (để nút Thêm/Xóa có tác dụng)
-        if (window.MOCK_DATA_CLEARED) {
-            showState('empty');
-        } else {
-            renderProducts(window.MOCK_DATA_ADDED ? mockProducts : []);
-            showState(window.MOCK_DATA_ADDED ? 'data' : 'empty');
+        console.error("Fetch lỗi:", error);
+        // Fallback Mock Data nếu máy chủ bị tắt
+        hasMoreData = false;
+        infiniteScrollTrigger.classList.add('hidden');
+        if(isFirstLoad) {
+            const mock = [
+                { id:1, name: "Bút bi Thiên Long", category: "Pen", price: 5000, stock: 1000, description: "Bút bi xanh nét thanh, mực ra đều trơn tru.", imageUrl: "https://tse2.mm.bing.net/th/id/OIP.UWI6PnnPDKETAxhUtQCm0gHaHa?pid=Api&P=0&h=180" },
+                { id:2, name: "Sổ tay da cao cấp", category: "Notebook", price: 150000, stock: 50, description: "Sổ bìa da thật cao cấp, thiết kế mộc mạc.", imageUrl: "https://tse2.mm.bing.net/th/id/OIP.aYdCziJV_Y3hlhyypSvbtwHaHa?pid=Api&P=0&h=180" },
+                { id:3, name: "Tẩy Gôm Trắng Pentel", category: "Eraser", price: 12000, stock: 200, description: "Gôm tẩy êm ái, siêu sạch.", imageUrl: "https://tse4.mm.bing.net/th/id/OIP.2XVHpnU7StA1XLaB5Ni3gQHaHa?pid=Api&P=0&h=180" },
+                { id:4, name: "Balo sinh viên đa năng", category: "Bag", price: 350000, stock: 10, description: "Balo thiết kế unisex năng động chống thấm.", imageUrl: "https://tse2.mm.bing.net/th/id/OIP.CxVhY1HQft1QUUtxWEorOAHaHa?pid=Api&P=0&h=180" },
+                { id:5, name: "Hộp bút màu HB", category: "Pencil", price: 45000, stock: 120, description: "Set 12 màu nghệ thuật, vỏ gỗ chống gãy lõi.", imageUrl: "https://tse3.mm.bing.net/th/id/OIP.oOZAsSifRH-Si0v2ru2RYAHaHa?pid=Api&P=0&h=180" },
+                { id:6, name: "Kéo thủ công Deli", category: "Accessories", price: 25000, stock: 80, description: "Lưỡi kéo sắc bén bọc đệm êm.", imageUrl: "https://tse2.mm.bing.net/th/id/OIP.l4QQVz8-Fl1eqTevKCQd2wHaHa?pid=Api&P=0&h=180" }
+            ];
+            allLoadedProducts = mock;
+            renderProducts(mock, false);
+            showState('data');
         }
+    } finally {
+        isFetching = false;
+        if (isFirstLoad && !hasMoreData) infiniteScrollTrigger.classList.add('hidden');
+        else if (isFirstLoad && hasMoreData) infiniteScrollTrigger.classList.remove('hidden');
     }
 }
 
-// Chuyển đổi trạng thái giao diện UI
+// Infinite Scroll Observer Trigger
+function setupIntersectionObserver() {
+    const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && !isFetching && hasMoreData) {
+            fetchProducts(false, currentSearch);
+        }
+    }, { rootMargin: '100px' });
+    
+    observer.observe(infiniteScrollTrigger);
+}
+
 function showState(state) {
     loadingState.classList.add('hidden');
     emptyState.classList.add('hidden');
-    productGrid.classList.add('hidden');
-
     if (state === 'loading') loadingState.classList.remove('hidden');
     if (state === 'empty') emptyState.classList.remove('hidden');
     if (state === 'data') productGrid.classList.remove('hidden');
 }
 
-// Lắng nghe sự kiện người dùng
-searchBtn.onclick = () => fetchProducts(searchInput.value);
-searchInput.onkeyup = (e) => { if (e.key === 'Enter') fetchProducts(searchInput.value) };
+searchBtn.onclick = () => fetchProducts(true, searchInput.value);
+searchInput.onkeyup = (e) => { if (e.key === 'Enter') fetchProducts(true, searchInput.value) };
 
-// Logic hiển thị Product Detail HTML
-function openProductDetail(product) {
-    const priceFmt = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price);
+/* =========================================
+   Product Detail Advanced Modal Logic
+========================================= */
+async function openProductDetail(product) {
+    const priceFmt = formatPrice(product.price);
+    const prodJson = encodeURIComponent(JSON.stringify(product));
     
+    // Tìm các sản phẩm khác (Related Products)
+    let related = allLoadedProducts.filter(p => p.id !== product.id && p.category === product.categoryId).slice(0, 3);
+    if(related.length === 0) related = allLoadedProducts.filter(p => p.id !== product.id).slice(0, 3); // Lấy đai nếu ko cùng category
+
+    // Render HTML Advance (Ban đầu để loading phần comments)
     modalBody.innerHTML = `
-        <img src="${product.imageUrl}" alt="${product.name}">
+        <div class="image-gallery">
+            <img src="${product.imageUrl}" class="main-img" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
+            <div class="thumbnails">
+                <img src="${product.imageUrl}" onerror="this.src='https://placehold.co/100x100?text=1'">
+                <img src="https://tse3.mm.bing.net/th/id/OIP.UWI6PnnPDKETAxhUtQCm0gHaHa?pid=Api&P=0&h=100" >
+                <img src="https://tse2.mm.bing.net/th/id/OIP.CxVhY1HQft1QUUtxWEorOAHaHa?pid=Api&P=0&h=100">
+            </div>
+            
+            <button class="add-to-cart-btn" onclick="addToCart('${prodJson}')">
+                <span class="material-icons-outlined">add_shopping_cart</span> BỎ VÀO GIỎ
+            </button>
+        </div>
+        
         <div class="modal-info">
-            <span class="card-category">${product.category}</span>
-            <h2>${product.name}</h2>
+            <div style="display:flex; justify-content: space-between; align-items: start;">
+                <div>
+                    <span class="card-category">${product.categoryId}</span>
+                    <h2 style="font-size: 2rem; margin-top: 0.5rem">${product.name}</h2>
+                </div>
+            </div>
+            
             <h1 style="color: var(--primary); font-size: 2.5rem;">${priceFmt}</h1>
             <span class="stock-badge">Còn trong kho: ${product.stock} items</span>
-            <p style="color: var(--text-muted); line-height: 1.6; margin-top: 1rem;">${product.description}</p>
+            
+            <p style="color: var(--text-muted); line-height: 1.6; margin-top: 1rem; flex:1;">
+                ${product.description}
+            </p>
+
+            <!-- Khối Đánh Giá và Form Liên Quan Mới -->
+            <div class="advanced-sections">
+                <div class="reviews-section">
+                    <div style="display:flex; justify-content: space-between; align-items: center;">
+                        <h3 class="reviews-title">Đánh giá nổi bật</h3>
+                        <div id="averageRating" style="color: #fbbf24; font-weight: bold;"></div>
+                    </div>
+                    <div id="reviewsContainer" style="margin-top: 0.5rem; max-height: 200px; overflow-y: auto;">
+                        <span style="color: #aaa; font-size: 0.9rem;">Đang tải đánh giá...</span>
+                    </div>
+
+                    <!-- Review Form -->
+                    <div style="margin-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 0.5rem;">
+                        <h4 style="margin-bottom: 0.2rem; font-size: 0.85rem;">Viết đánh giá của bạn</h4>
+                        <input type="text" id="reviewAuthor" placeholder="Tên của bạn" style="width:100%; padding: 0.5rem; border-radius:4px; margin-bottom:0.5rem; background:rgba(255,255,255,0.05); color:white; border:1px solid var(--border)">
+                        <select id="reviewRating" style="width:100%; padding: 0.5rem; border-radius:4px; margin-bottom:0.5rem; background:rgba(15,23,42,0.9); color:white; border:1px solid var(--border)">
+                            <option value="5">5 Sao - Tuyệt vời</option>
+                            <option value="4">4 Sao - Rất tốt</option>
+                            <option value="3">3 Sao - Bình thường</option>
+                            <option value="2">2 Sao - Kém</option>
+                            <option value="1">1 Sao - Tệ</option>
+                        </select>
+                        <textarea id="reviewComment" placeholder="Nhận xét chi tiết..." style="width:100%; padding: 0.5rem; border-radius:4px; margin-bottom:0.4rem; background:rgba(255,255,255,0.05); color:white; border:1px solid var(--border); min-height: 45px"></textarea>
+                        <button onclick="submitReview('${product.id}')" style="background:var(--primary); color:white; border:none; padding:0.5rem 1rem; border-radius:4px; cursor:pointer; width:100%">Gửi đánh giá</button>
+                    </div>
+                </div>
+                
+                <div class="related-products">
+                    <h3 class="reviews-title" style="margin-top: 1rem;">Có thể bạn cũng thích</h3>
+                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.5rem;">
+                        ${related.map(r => `
+                            <div style="background:rgba(255,255,255,0.05); border-radius:8px; padding:0.5rem; text-align:center; cursor:pointer; border:1px solid rgba(255,255,255,0.05); transition: 0.2s;" onclick="openProductDetail({ id:'${r.id}', name:'${r.name.replace(/'/g, "\\'")}', categoryId:'${r.categoryId}', price:${r.price}, stock:${r.stock}, description:'${r.description.replace(/'/g, "\\'")}', imageUrl:'${r.imageUrl}' })" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.05)'">
+                                <img src="${r.imageUrl}" style="width:100%; height:80px; object-fit:cover; border-radius:4px;" onerror="this.src='https://placehold.co/100x100?text=No+Img'">
+                                <div style="font-size:0.75rem; margin-top:0.3rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${r.name}</div>
+                                <div style="font-size:0.75rem; color:var(--primary); font-weight:bold;">${formatPrice(r.price)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
         </div>
     `;
-    productModal.classList.add('active'); // Hiện popup xem chi tiết
+    productModal.classList.add('active');
+    productModal.classList.remove('hidden');
+
+    // Fetch reviews from API
+    try {
+        const response = await fetch(`${API_BASE_URL}/ecommerce/products/${product.id}/reviews`);
+        const reviewsContainer = document.getElementById('reviewsContainer');
+        const averageRating = document.getElementById('averageRating');
+
+        if (!response.ok) throw new Error("API Lỗi");
+        const reviews = await response.json();
+
+        if (reviews.length === 0) {
+            reviewsContainer.innerHTML = `<p style="font-size:0.85rem; color: #aaa;">Chưa có đánh giá nào cho sản phẩm. Trở thành người đầu tiên review!</p>`;
+            averageRating.innerHTML = "";
+        } else {
+            let totalRating = 0;
+            let htmlStr = "";
+            reviews.forEach(r => {
+                totalRating += r.rating;
+                const stars = "★".repeat(r.rating) + "☆".repeat(5 - r.rating);
+                htmlStr += `
+                    <div class="review-item" style="margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <div class="stars" style="color: #fbbf24;">${stars}</div>
+                        <p style="font-size:0.85rem; margin: 0.2rem 0;">"${r.comment}"</p>
+                        <span style="font-size:0.7rem; color: #888;">- ${r.author}</span>
+                    </div>
+                `;
+            });
+            let avg = (totalRating / reviews.length).toFixed(1);
+            if (avg.endsWith('.0')) avg = avg.slice(0, -2);
+            
+            averageRating.innerHTML = `${avg}/5 ★`;
+            reviewsContainer.innerHTML = htmlStr;
+        }
+    } catch (e) {
+        console.error("Lỗi fetch reviews:", e);
+        const reviewsContainer = document.getElementById('reviewsContainer');
+        if(reviewsContainer) {
+            reviewsContainer.innerHTML = `<p style="font-size:0.85rem; color: #ef4444;">Không thể tải đánh giá lúc này.</p>`;
+        }
+    }
 }
 
-closeModal.onclick = () => productModal.classList.remove('active');
-
-
-
-// Init Khởi động Web khi tải xong
-window.onload = () => {
-    fetchProducts();
+closeModal.onclick = () => {
+    productModal.classList.remove('active');
+    setTimeout(() => productModal.classList.add('hidden'), 300);
 };
+
+/* =========================================
+   Submit Review
+========================================= */
+async function submitReview(productId) {
+    const author = document.getElementById('reviewAuthor').value.trim();
+    const rating = document.getElementById('reviewRating').value;
+    const comment = document.getElementById('reviewComment').value.trim();
+
+    if (!author || !comment) {
+        showToast("Vui lòng nhập tên và nội dung đánh giá!");
+        return;
+    }
+
+    try {
+        const formData = new URLSearchParams();
+        formData.append('author', author);
+        formData.append('rating', rating);
+        formData.append('comment', comment);
+
+        const response = await fetch(`${API_BASE_URL}/ecommerce/products/${productId}/reviews`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) throw new Error("Lỗi khi gửi đánh giá");
+        showToast("Cảm ơn bạn đã đánh giá!");
+        
+        // Refresh product detail automatically by reopening modal
+        const prod = allLoadedProducts.find(p => p.id === productId);
+        if (prod) openProductDetail(prod);
+    } catch (e) {
+        console.error("Lỗi submit review:", e);
+        showToast("Không thể gửi đánh giá lúc này.");
+    }
+}
+
+/* =========================================
+   Filter & Sort Event Listeners
+========================================= */
+const categoryTabs = document.querySelectorAll('.cat-tab');
+if (categoryTabs) {
+    categoryTabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            categoryTabs.forEach(t => t.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            currentCategory = e.currentTarget.getAttribute('data-id');
+            fetchProducts(true, currentSearch);
+        });
+    });
+}
+
+const sortSelect = document.getElementById('sortSelect');
+if (sortSelect) {
+    sortSelect.addEventListener('change', (e) => {
+        currentSort = e.target.value;
+        fetchProducts(true, currentSearch);
+    });
+}
+

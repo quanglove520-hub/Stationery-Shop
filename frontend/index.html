@@ -24,13 +24,38 @@
             <button id="searchBtn"><span class="material-icons-outlined">search</span></button>
         </div>
         <nav>
-            <!-- Navigation items for Production can go here in the future -->
+            <button class="nav-btn" onclick="openCart()">
+                <span class="material-icons-outlined">shopping_cart</span> Giỏ Hàng <span id="cartBadge" class="badge">0</span>
+            </button>
         </nav>
     </header>
 
     <main class="container">
         <div class="section-title">
             <h2>Khám phá mặt hàng</h2>
+        </div>
+
+        <div class="filter-bar-container" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+            <!-- Filter Category Tabs -->
+            <div class="category-tabs" id="categoryTabs" style="margin-bottom: 0;">
+                <button class="cat-tab active" data-id="all">Tất cả</button>
+                <button class="cat-tab" data-id="Pen">Bút</button>
+                <button class="cat-tab" data-id="Notebook">Sổ tay</button>
+                <button class="cat-tab" data-id="Pencil">Bút chì</button>
+                <button class="cat-tab" data-id="Bag">Balo</button>
+                <button class="cat-tab" data-id="Eraser">Tẩy</button>
+                <button class="cat-tab" data-id="Ruler">Thước</button>
+                <button class="cat-tab" data-id="Organizer">Kệ/Bìa</button>
+                <button class="cat-tab" data-id="Accessories">Phụ kiện</button>
+            </div>
+
+            <div class="filter-controls">
+                <select id="sortSelect" class="sort-select">
+                    <option value="">Sắp xếp mặc định</option>
+                    <option value="price_asc">Giá: Thấp đến Cao</option>
+                    <option value="price_desc">Giá: Cao đến Thấp</option>
+                </select>
+            </div>
         </div>
         
         <!-- Loading State -->
@@ -52,6 +77,12 @@
             <h3>NO DATA - Không có dữ liệu</h3>
             <p>Hiện không tìm thấy sản phẩm văn phòng phẩm nào phù hợp.</p>
         </div>
+        
+        <!-- Infinite Scroll Trigger -->
+        <div id="infiniteScrollTrigger" class="state-container hidden">
+            <div class="spinner"></div>
+            <p>Đang tải thêm sản phẩm...</p>
+        </div>
     </main>
 
     <!-- Product Detail Modal Popup -->
@@ -63,6 +94,35 @@
             </div>
         </div>
     </div>
+
+    <!-- Slide-over Cart Panel -->
+    <div id="cartOverlay" class="cart-overlay hidden" onclick="closeCart()"></div>
+    <div id="cartPanel" class="cart-panel glassmorphism hidden">
+        <div class="cart-header">
+            <h2>🛒 Giỏ Hàng Của Bạn</h2>
+            <button class="close-btn" onclick="closeCart()"><span class="material-icons-outlined">close</span></button>
+        </div>
+        
+        <div id="cartItems" class="cart-items">
+            <!-- Render via JS -->
+        </div>
+        
+        <div class="cart-footer">
+            <div class="discount-section">
+                <input type="text" id="discountCode" placeholder="Mã giảm giá (VD: SALE10)">
+                <button onclick="applyDiscount()">Áp dụng</button>
+            </div>
+            <div class="total-row">
+                <span>Tổng tiền:</span>
+                <span id="cartTotal" class="total-price">0 đ</span>
+            </div>
+            <p id="discountMessage" class="discount-msg"></p>
+            <button class="checkout-btn" onclick="checkout()"><span class="btn-text">💸 THANH TOÁN NGAY</span></button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden"></div>
 
     <!-- Scripts -->
     <script src="app.js"></script>

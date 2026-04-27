@@ -1,0 +1,57 @@
+﻿diff --git a/stationary-core/src/main/java/stationary/boundary/web/WebServer.java b/stationary-core/src/main/java/stationary/boundary/web/WebServer.java
+index 58ab0f2..17c8daf 100644
+--- a/stationary-core/src/main/java/stationary/boundary/web/WebServer.java
++++ b/stationary-core/src/main/java/stationary/boundary/web/WebServer.java
+@@ -1,9 +1,9 @@
+ package stationary.boundary.web;
+ 
+ import com.google.gson.Gson;
+-import stationary.control.CatalogControl;
++// import stationary.control.CatalogControl;
+ import stationary.control.CustomerOrderControl;
+-import stationary.control.AdminInventoryControl;
++// import stationary.control.AdminInventoryControl;
+ import stationary.entity.Product;
+ import stationary.entity.OrderLineItem;
+ import stationary.entity.Category;
+@@ -13,7 +13,7 @@ import java.util.List;
+ import static spark.Spark.*;
+ 
+ public class WebServer {
+-    private static CatalogControl catalogControl = new CatalogControl();
++    // private static CatalogControl catalogControl = new CatalogControl();
+     private static CustomerOrderControl orderControl = new CustomerOrderControl();
+     private static Gson gson = new Gson();
+ 
+@@ -21,6 +21,7 @@ public class WebServer {
+         port(4567);
+         staticFiles.location("/public");
+ 
++        /*
+         // API Catalog
+         get("/api/categories", (req, res) -> {
+             res.type("application/json");
+@@ -74,6 +75,7 @@ public class WebServer {
+             catalogControl.clearProducts();
+             return "{\"status\":\"ok\", \"message\":\"Cleared Data. You can test NO DATA scenario.\"}";
+         });
++        */
+ 
+         // API Cart
+         get("/api/cart", (req, res) -> {
+@@ -96,6 +98,7 @@ public class WebServer {
+             return "{\"status\":\"ok\"}";
+         });
+ 
++        /*
+         // ================= API ADMIN ================= //
+         AdminInventoryControl adminControl = new AdminInventoryControl();
+ 
+@@ -148,6 +151,7 @@ public class WebServer {
+                 return "{\"error\":\"" + e.getMessage() + "\"}";
+             }
+         });
++        */
+         
+         System.out.println("System Initialized! Go to http://localhost:4567");
+     }
