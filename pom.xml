@@ -11,7 +11,7 @@
     <modules>
         <module>stationary-core</module>
         <module>plugin-inventory</module>
-        <module>plugin-cart</module>
+
         <module>plugin-order</module>
         <module>plugin-notify</module>
         <module>plugin-user</module>

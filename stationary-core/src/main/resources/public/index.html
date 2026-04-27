@@ -24,9 +24,6 @@
             <button id="searchBtn"><span class="material-icons-outlined">search</span></button>
         </div>
         <nav>
-            <button class="nav-btn" onclick="openCart()">
-                <span class="material-icons-outlined">shopping_cart</span> Giỏ Hàng <span id="cartBadge" class="badge">0</span>
-            </button>
         </nav>
     </header>
 
@@ -95,31 +92,6 @@
         </div>
     </div>
 
-    <!-- Slide-over Cart Panel -->
-    <div id="cartOverlay" class="cart-overlay hidden" onclick="closeCart()"></div>
-    <div id="cartPanel" class="cart-panel glassmorphism hidden">
-        <div class="cart-header">
-            <h2>🛒 Giỏ Hàng Của Bạn</h2>
-            <button class="close-btn" onclick="closeCart()"><span class="material-icons-outlined">close</span></button>
-        </div>
-        
-        <div id="cartItems" class="cart-items">
-            <!-- Render via JS -->
-        </div>
-        
-        <div class="cart-footer">
-            <div class="discount-section">
-                <input type="text" id="discountCode" placeholder="Mã giảm giá (VD: SALE10)">
-                <button onclick="applyDiscount()">Áp dụng</button>
-            </div>
-            <div class="total-row">
-                <span>Tổng tiền:</span>
-                <span id="cartTotal" class="total-price">0 đ</span>
-            </div>
-            <p id="discountMessage" class="discount-msg"></p>
-            <button class="checkout-btn" onclick="checkout()"><span class="btn-text">💸 THANH TOÁN NGAY</span></button>
-        </div>
-    </div>
 
     <!-- Toast Notification -->
     <div id="toast" class="toast hidden"></div>
