@@ -142,10 +142,15 @@ function updateWishlistUI() {
                     <span>${item.name || 'Unknown'}</span>
                     <span class="price">${priceFmt}</span>
                 </div>
-                <button class="remove-wishlist-btn" onclick="try{window.event.stopPropagation();}catch(e){} toggleWishlist(this, ${item.id});">
+                <button class="remove-wishlist-btn">
                     <span class="material-icons-outlined" style="font-size: 1.2rem;">delete</span>
                 </button>
             `;
+            const rmvBtn = div.querySelector('.remove-wishlist-btn');
+            rmvBtn.onclick = (e) => {
+                e.stopPropagation();
+                toggleWishlist(rmvBtn, item.id);
+            };
             wishlistItemsContainer.appendChild(div);
         });
     } catch (e) {
@@ -173,7 +178,7 @@ function renderProducts(products, append = false) {
 
         card.innerHTML = `
             <img src="${product.imageUrl}" alt="${product.name}" class="card-img" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
-            <button class="wishlist-btn ${isWished ? 'active' : ''}" onclick="try{window.event.stopPropagation();}catch(e){} toggleWishlist(this, ${product.id})">
+            <button class="wishlist-btn ${isWished ? 'active' : ''}">
                 <span class="material-icons-outlined">favorite</span>
             </button>
             <span class="card-category">${product.categoryId}</span>
@@ -183,6 +188,13 @@ function renderProducts(products, append = false) {
                 <button class="buy-btn">Chi tiết</button>
             </div>
         `;
+        
+        const wishBtn = card.querySelector('.wishlist-btn');
+        wishBtn.onclick = (e) => {
+            e.stopPropagation();
+            toggleWishlist(wishBtn, product.id);
+        };
+        
         productGrid.appendChild(card);
     });
 }
