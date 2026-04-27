@@ -24,11 +24,19 @@ let hasMoreData = true;
 let allLoadedProducts = []; // Lưu lại để dùng cho Related products
 
 let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+wishlist = wishlist.filter(item => typeof item === 'object'); // Clear old number format if any
+localStorage.setItem('wishlist', JSON.stringify(wishlist));
+
+// Dropdown UI elements
+const wishlistDropdown = document.getElementById('wishlistDropdown');
+const wishlistItemsContainer = document.getElementById('wishlistItems');
+const wishlistBadge = document.getElementById('wishlistBadge');
 
 // Khởi tạo ứng dụng
 window.onload = () => {
     fetchProducts(true);
     setupIntersectionObserver();
+    updateWishlistUI();
 };
 
 /* =========================================
@@ -43,11 +51,33 @@ function showToast(message) {
     }, 3000);
 }
 
+function toggleWishlistPanel() {
+    wishlistDropdown.classList.toggle('hidden');
+    setTimeout(() => {
+        wishlistDropdown.classList.toggle('active');
+    }, 10);
+}
+
+// Click outside to close dropdown
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('nav') && wishlistDropdown.classList.contains('active')) {
+        wishlistDropdown.classList.remove('active');
+        setTimeout(() => wishlistDropdown.classList.add('hidden'), 300);
+    }
+});
+
 function toggleWishlist(btn, productId) {
-    const index = wishlist.indexOf(productId);
+    let product = allLoadedProducts.find(p => p.id === productId);
+    if (!product) product = { id: productId, name: 'Sản phẩm ' + productId, price: 0, imageUrl: '' };
+    
+    const index = wishlist.findIndex(item => item.id === productId);
     
     if (index === -1) {
-        wishlist.push(productId);
+        wishlist.push({ 
+            id: product.id, name: product.name, price: product.price, 
+            imageUrl: product.imageUrl, categoryId: product.categoryId, 
+            stock: product.stock, description: product.description 
+        });
         showToast("Đã thêm vào yêu thích ❤");
     } else {
         wishlist.splice(index, 1);
@@ -57,7 +87,53 @@ function toggleWishlist(btn, productId) {
     localStorage.setItem('wishlist', JSON.stringify(wishlist));
     
     // Tìm button và toggle class
-    btn.classList.toggle('active');
+    if(btn && btn.classList.contains('wishlist-btn')) {
+        btn.classList.toggle('active');
+    } else {
+        // If removed from dropdown, update the grid button if exists
+        const allBtns = document.querySelectorAll('.wishlist-btn');
+        allBtns.forEach(b => {
+            if (b.getAttribute('onclick').includes(productId)) {
+                b.classList.remove('active');
+            }
+        });
+    }
+    updateWishlistUI();
+}
+
+function updateWishlistUI() {
+    if(wishlistBadge) wishlistBadge.textContent = wishlist.length;
+    
+    if(!wishlistItemsContainer) return;
+    wishlistItemsContainer.innerHTML = '';
+    
+    if (wishlist.length === 0) {
+        wishlistItemsContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; font-size: 0.9rem; padding: 1rem 0;">Bạn chưa có sản phẩm nào trong danh sách yêu thích.</p>';
+        return;
+    }
+    
+    wishlist.forEach(item => {
+        const priceFmt = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price);
+        const div = document.createElement('div');
+        div.className = 'wishlist-item-small';
+        div.onclick = () => {
+            const fullProd = allLoadedProducts.find(p => p.id === item.id) || item;
+            openProductDetail(fullProd);
+            wishlistDropdown.classList.remove('active');
+            setTimeout(() => wishlistDropdown.classList.add('hidden'), 300);
+        };
+        div.innerHTML = `
+            <img src="${item.imageUrl}" onerror="this.src='https://placehold.co/40x40?text=No+Img'">
+            <div class="wishlist-item-small-info">
+                <span>${item.name}</span>
+                <span class="price">${priceFmt}</span>
+            </div>
+            <button class="remove-wishlist-btn" onclick="event.stopPropagation(); toggleWishlist(this, ${item.id});">
+                <span class="material-icons-outlined" style="font-size: 1.2rem;">delete</span>
+            </button>
+        `;
+        wishlistItemsContainer.appendChild(div);
+    });
 }
 
 /* =========================================
@@ -71,7 +147,7 @@ function renderProducts(products, append = false) {
     if (!append) productGrid.innerHTML = '';
     
     products.forEach(product => {
-        const isWished = wishlist.includes(product.id);
+        const isWished = wishlist.some(item => item.id === product.id);
         const card = document.createElement('div');
         card.className = 'card';
         card.onclick = () => openProductDetail(product);

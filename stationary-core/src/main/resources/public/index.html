@@ -23,7 +23,20 @@
             <input type="text" id="searchInput" placeholder="Tìm kiếm văn phòng phẩm...">
             <button id="searchBtn"><span class="material-icons-outlined">search</span></button>
         </div>
-        <nav>
+        <nav style="position: relative;">
+            <button class="nav-btn" onclick="toggleWishlistPanel()">
+                <span class="material-icons-outlined">favorite</span> Yêu thích <span id="wishlistBadge" class="badge">0</span>
+            </button>
+            
+            <!-- Dropdown -->
+            <div id="wishlistDropdown" class="wishlist-dropdown hidden glassmorphism">
+                <div class="dropdown-header">
+                    <h4>Sản phẩm yêu thích</h4>
+                </div>
+                <div id="wishlistItems" class="dropdown-items">
+                    <!-- Rendered by JS -->
+                </div>
+            </div>
         </nav>
     </header>
 
