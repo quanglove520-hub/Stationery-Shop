@@ -477,3 +477,5 @@ if (sortSelect) {
     });
 }
 
+  
+document.addEventListener('DOMContentLoaded', function() { var btn = document.getElementById('closeModal'); if(btn) { btn.addEventListener('click', function() { var mod = document.getElementById('productModal'); mod.classList.remove('active'); setTimeout(function(){ mod.classList.add('hidden'); }, 300); }); } }); 

@@ -23,13 +23,15 @@
             <input type="text" id="searchInput" placeholder="Tìm kiếm văn phòng phẩm...">
             <button id="searchBtn"><span class="material-icons-outlined">search</span></button>
         </div>
-        <nav style="position: relative;">
+        
+        <!-- Khu vực Wishlist của riêng bạn (đã dời ra khỏi <nav> để không đụng nhóm) -->
+        <div style="position: relative; margin-left: 20px; margin-right: auto;">
             <button class="nav-btn" onclick="toggleWishlistPanel()">
                 <span class="material-icons-outlined">favorite</span> Yêu thích <span id="wishlistBadge" class="badge">0</span>
             </button>
             
-            <!-- Dropdown -->
-            <div id="wishlistDropdown" class="wishlist-dropdown hidden glassmorphism">
+            <!-- Dropdown Yêu Thích -->
+            <div id="wishlistDropdown" class="wishlist-dropdown hidden glassmorphism" style="right: auto; left: 0;">
                 <div class="dropdown-header">
                     <h4>Sản phẩm yêu thích</h4>
                 </div>
@@ -37,6 +39,11 @@
                     <!-- Rendered by JS -->
                 </div>
             </div>
+        </div>
+
+        <!-- Khu vực dành sẵn cho nhóm (Giỏ hàng, Đăng nhập) sau này -->
+        <nav id="teamAreaPlaceholder" style="display:flex; gap:1rem;">
+            <!-- Khi nhóm trưởng merge code, nút Giỏ hàng sẽ vào đây, không cấn Wishlist -->
         </nav>
     </header>
 
@@ -97,9 +104,11 @@
 
     <!-- Product Detail Modal Popup -->
     <div id="productModal" class="modal-overlay hidden">
-        <div class="modal-content glassmorphism">
-            <button id="closeModal" class="close-btn"><span class="material-icons-outlined">close</span></button>
-            <div class="modal-body" id="modalBody">
+        <div class="modal-content glassmorphism" style="position: relative;">
+            <button id="closeModal" class="close-btn" style="position:absolute; top:15px; right:15px; background:rgba(255,255,255,0.1); border:none; color:white; border-radius:50%; width:36px; height:36px; cursor:pointer; z-index:9999; display:flex; justify-content:center; align-items:center; transition:0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                <span class="material-icons-outlined">close</span>
+            </button>
+            <div class="modal-body" id="modalBody" style="margin-top: 20px;">
                 <!-- Nội dung chi tiết render qua JS -->
             </div>
         </div>
