@@ -23,8 +23,15 @@ let isFetching = false;
 let hasMoreData = true;
 let allLoadedProducts = []; // Lưu lại để dùng cho Related products
 
-let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
-wishlist = wishlist.filter(item => typeof item === 'object'); // Clear old number format if any
+let wishlist = [];
+try {
+    const stored = JSON.parse(localStorage.getItem('wishlist'));
+    if (Array.isArray(stored)) {
+        wishlist = stored;
+    }
+} catch (e) { console.error('Lỗi parse wishlist:', e); }
+
+wishlist = wishlist.filter(item => typeof item === 'object' && item !== null); // Clear old format
 localStorage.setItem('wishlist', JSON.stringify(wishlist));
 
 // Dropdown UI elements
@@ -67,73 +74,83 @@ document.addEventListener('click', (e) => {
 });
 
 function toggleWishlist(btn, productId) {
-    let product = allLoadedProducts.find(p => p.id === productId);
-    if (!product) product = { id: productId, name: 'Sản phẩm ' + productId, price: 0, imageUrl: '' };
-    
-    const index = wishlist.findIndex(item => item.id === productId);
-    
-    if (index === -1) {
-        wishlist.push({ 
-            id: product.id, name: product.name, price: product.price, 
-            imageUrl: product.imageUrl, categoryId: product.categoryId, 
-            stock: product.stock, description: product.description 
-        });
-        showToast("Đã thêm vào yêu thích ❤");
-    } else {
-        wishlist.splice(index, 1);
-        showToast("Đã bỏ khỏi yêu thích 🤍");
+    try {
+        let product = allLoadedProducts.find(p => p.id === productId);
+        if (!product) product = { id: productId, name: 'Sản phẩm ' + productId, price: 0, imageUrl: '' };
+        
+        const index = wishlist.findIndex(item => item && item.id === productId);
+        
+        if (index === -1) {
+            wishlist.push({ 
+                id: product.id, name: product.name, price: product.price || 0, 
+                imageUrl: product.imageUrl || '', categoryId: product.categoryId || '', 
+                stock: product.stock || 0, description: product.description || '' 
+            });
+            showToast("Đã thêm vào yêu thích ❤");
+        } else {
+            wishlist.splice(index, 1);
+            showToast("Đã bỏ khỏi yêu thích 🤍");
+        }
+        
+        localStorage.setItem('wishlist', JSON.stringify(wishlist));
+        
+        // Tìm button và toggle class
+        if(btn && btn.classList && btn.classList.contains('wishlist-btn')) {
+            btn.classList.toggle('active');
+        } else {
+            // If removed from dropdown, update the grid button if exists
+            const allBtns = document.querySelectorAll('.wishlist-btn');
+            allBtns.forEach(b => {
+                const onclickAttr = b.getAttribute('onclick');
+                if (onclickAttr && onclickAttr.includes(productId)) {
+                    b.classList.remove('active');
+                }
+            });
+        }
+        updateWishlistUI();
+    } catch (e) {
+        alert("Lỗi toggleWishlist: " + e.message);
     }
-    
-    localStorage.setItem('wishlist', JSON.stringify(wishlist));
-    
-    // Tìm button và toggle class
-    if(btn && btn.classList.contains('wishlist-btn')) {
-        btn.classList.toggle('active');
-    } else {
-        // If removed from dropdown, update the grid button if exists
-        const allBtns = document.querySelectorAll('.wishlist-btn');
-        allBtns.forEach(b => {
-            if (b.getAttribute('onclick').includes(productId)) {
-                b.classList.remove('active');
-            }
-        });
-    }
-    updateWishlistUI();
 }
 
 function updateWishlistUI() {
-    if(wishlistBadge) wishlistBadge.textContent = wishlist.length;
-    
-    if(!wishlistItemsContainer) return;
-    wishlistItemsContainer.innerHTML = '';
-    
-    if (wishlist.length === 0) {
-        wishlistItemsContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; font-size: 0.9rem; padding: 1rem 0;">Bạn chưa có sản phẩm nào trong danh sách yêu thích.</p>';
-        return;
+    try {
+        if(wishlistBadge) wishlistBadge.textContent = wishlist.length;
+        
+        if(!wishlistItemsContainer) return;
+        wishlistItemsContainer.innerHTML = '';
+        
+        if (wishlist.length === 0) {
+            wishlistItemsContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; font-size: 0.9rem; padding: 1rem 0;">Bạn chưa có sản phẩm nào trong danh sách yêu thích.</p>';
+            return;
+        }
+        
+        wishlist.forEach(item => {
+            if (!item) return;
+            const priceFmt = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price || 0);
+            const div = document.createElement('div');
+            div.className = 'wishlist-item-small';
+            div.onclick = () => {
+                const fullProd = allLoadedProducts.find(p => p.id === item.id) || item;
+                openProductDetail(fullProd);
+                wishlistDropdown.classList.remove('active');
+                setTimeout(() => wishlistDropdown.classList.add('hidden'), 300);
+            };
+            div.innerHTML = `
+                <img src="${item.imageUrl || ''}" onerror="this.src='https://placehold.co/40x40?text=No+Img'">
+                <div class="wishlist-item-small-info">
+                    <span>${item.name || 'Unknown'}</span>
+                    <span class="price">${priceFmt}</span>
+                </div>
+                <button class="remove-wishlist-btn" onclick="try{window.event.stopPropagation();}catch(e){} toggleWishlist(this, ${item.id});">
+                    <span class="material-icons-outlined" style="font-size: 1.2rem;">delete</span>
+                </button>
+            `;
+            wishlistItemsContainer.appendChild(div);
+        });
+    } catch (e) {
+        console.error("Lỗi updateWishlistUI:", e);
     }
-    
-    wishlist.forEach(item => {
-        const priceFmt = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price);
-        const div = document.createElement('div');
-        div.className = 'wishlist-item-small';
-        div.onclick = () => {
-            const fullProd = allLoadedProducts.find(p => p.id === item.id) || item;
-            openProductDetail(fullProd);
-            wishlistDropdown.classList.remove('active');
-            setTimeout(() => wishlistDropdown.classList.add('hidden'), 300);
-        };
-        div.innerHTML = `
-            <img src="${item.imageUrl}" onerror="this.src='https://placehold.co/40x40?text=No+Img'">
-            <div class="wishlist-item-small-info">
-                <span>${item.name}</span>
-                <span class="price">${priceFmt}</span>
-            </div>
-            <button class="remove-wishlist-btn" onclick="event.stopPropagation(); toggleWishlist(this, ${item.id});">
-                <span class="material-icons-outlined" style="font-size: 1.2rem;">delete</span>
-            </button>
-        `;
-        wishlistItemsContainer.appendChild(div);
-    });
 }
 
 /* =========================================
@@ -156,7 +173,7 @@ function renderProducts(products, append = false) {
 
         card.innerHTML = `
             <img src="${product.imageUrl}" alt="${product.name}" class="card-img" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
-            <button class="wishlist-btn ${isWished ? 'active' : ''}" onclick="event.stopPropagation(); toggleWishlist(this, ${product.id})">
+            <button class="wishlist-btn ${isWished ? 'active' : ''}" onclick="try{window.event.stopPropagation();}catch(e){} toggleWishlist(this, ${product.id})">
                 <span class="material-icons-outlined">favorite</span>
             </button>
             <span class="card-category">${product.categoryId}</span>
