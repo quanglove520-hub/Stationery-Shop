@@ -43,8 +43,7 @@ function showToast(message) {
     }, 3000);
 }
 
-function toggleWishlist(e, productId) {
-    e.stopPropagation(); // Ngăn sự kiện click lan ra thẻ card
+function toggleWishlist(btn, productId) {
     const index = wishlist.indexOf(productId);
     
     if (index === -1) {
@@ -58,7 +57,6 @@ function toggleWishlist(e, productId) {
     localStorage.setItem('wishlist', JSON.stringify(wishlist));
     
     // Tìm button và toggle class
-    const btn = e.currentTarget;
     btn.classList.toggle('active');
 }
 
@@ -82,7 +80,7 @@ function renderProducts(products, append = false) {
 
         card.innerHTML = `
             <img src="${product.imageUrl}" alt="${product.name}" class="card-img" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
-            <button class="wishlist-btn ${isWished ? 'active' : ''}" onclick="toggleWishlist(event, ${product.id})">
+            <button class="wishlist-btn ${isWished ? 'active' : ''}" onclick="event.stopPropagation(); toggleWishlist(this, ${product.id})">
                 <span class="material-icons-outlined">favorite</span>
             </button>
             <span class="card-category">${product.categoryId}</span>
