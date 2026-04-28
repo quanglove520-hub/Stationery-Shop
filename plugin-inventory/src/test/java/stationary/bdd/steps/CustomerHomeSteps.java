@@ -7,6 +7,8 @@ import io.cucumber.java.en.And;
 import stationary.control.CatalogControl;
 import stationary.entity.Category;
 import stationary.store.InMemoryStore;
+import stationary.store.SqlServerStore;
+import io.cucumber.java.Before;
 import org.junit.jupiter.api.Assertions;
 
 import java.util.List;
@@ -20,8 +22,13 @@ public class CustomerHomeSteps {
         catalogControl = new CatalogControl();
     }
 
+    @Before
+    public void setup() {
+        catalogControl.setStore(InMemoryStore.getInstance());
+    }
+
     @Given("Dữ liệu mẫu đã được nạp với {int} danh mục chuẩn")
-    public void setupCategories(int count) {
+    public void setupCategories(int count) throws Exception {
         InMemoryStore.getInstance().clear();
         for (int i = 0; i < count; i++) {
             InMemoryStore.getInstance().addCategory(new Category("c" + i, "Danh mục " + i, "icon" + i + ".png"));

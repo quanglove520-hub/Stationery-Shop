@@ -1,40 +1,22 @@
 package stationary.store;
 
 import stationary.entity.Category;
-import stationary.entity.Order;
 import stationary.entity.Product;
-
+import stationary.entity.Order;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class InMemoryStore {
+
+import java.sql.SQLException;
+
+public class InMemoryStore implements ProductStore, OrderStore {
     private static InMemoryStore instance;
-    private List<Category> categories;
-    private List<Product> products;
-    private List<Order> orders;
+    private List<Category> categories = new ArrayList<>();
+    private List<Product> products = new ArrayList<>();
+    private List<Order> orders = new ArrayList<>();
 
-    private InMemoryStore() {
-        categories = new ArrayList<>();
-        products = new ArrayList<>();
-        orders = new ArrayList<>();
-        seedDummyData();
-    }
-
-    private void seedDummyData() {
-        categories.add(new Category("C1", "Bìa - Kệ hồ sơ", "📁"));
-        categories.add(new Category("C2", "Giấy", "📄"));
-        categories.add(new Category("C3", "Bút - Viết", "🖊️"));
-        categories.add(new Category("C4", "Sổ - Tập", "📓"));
-        categories.add(new Category("C5", "Kéo - Dao rọc giấy", "✂️"));
-        categories.add(new Category("C6", "Dụng cụ khác", "📎"));
-
-        products.add(new Product("P201", "C2", "Giấy A4 Double A", 65000, 100));
-        products.add(new Product("P202", "C2", "Giấy Note Vàng", 12000, 50));
-        
-        products.add(new Product("P301", "C3", "Bút Bi Thiên Long", 5000, 200));
-        products.add(new Product("P302", "C3", "Bút Máy Parker", 450000, 10));
-        products.add(new Product("P303", "C3", "Bút Dạ Quang", 15000, 30));
-    }
+    private InMemoryStore() {}
 
     public static synchronized InMemoryStore getInstance() {
         if (instance == null) {
@@ -43,41 +25,86 @@ public class InMemoryStore {
         return instance;
     }
 
-    public void clear() {
+    public synchronized void clear() {
         categories.clear();
         products.clear();
         orders.clear();
     }
 
-    public void clearProducts() {
-        products.clear();
+    @Override
+    public List<Category> getCategories() throws SQLException { return categories; }
+    
+    @Override
+    public List<Product> getProducts() throws SQLException { return products; }
+
+    @Override
+    public List<Order> getAllOrders() throws SQLException { return orders; }
+
+    @Override
+    public List<Order> getOrdersByStatus(String status) throws SQLException {
+        return orders.stream()
+                .filter(o -> o.getStatus().equals(status))
+                .collect(Collectors.toList());
     }
 
-    public List<Category> getCategories() { return categories; }
-    public List<Product> getProducts() { return products; }
+    @Override
+    public boolean saveOrder(Order order) throws SQLException {
+        orders.add(order);
+        return true;
+    }
+
     public List<Order> getOrders() { return orders; }
 
-    public void addCategory(Category category) { categories.add(category); }
-    public void addProduct(Product product) { products.add(product); }
+    @Override
+    public boolean addCategory(Category category) throws SQLException { 
+        categories.add(category); 
+        return true;
+    }
+
+    @Override
+    public boolean updateCategory(String id, Category category) throws SQLException {
+        removeCategory(id);
+        addCategory(category);
+        return true;
+    }
+
+    @Override
+    public boolean removeCategory(String id) throws SQLException {
+        return categories.removeIf(c -> c.getId().equals(id));
+    }
+
+    @Override
+    public boolean categoryExists(String id) throws SQLException {
+        return categories.stream().anyMatch(c -> c.getId().equals(id));
+    }
+
+    @Override
+    public boolean addProduct(Product product) throws SQLException { 
+        products.add(product); 
+        return true;
+    }
+
+    @Override
+    public Product getProductById(String id) throws SQLException {
+        return products.stream().filter(p -> p.getId().equals(id)).findFirst().orElse(null);
+    }
+
+    @Override
+    public boolean isProductInAnyOrder(String productId) throws SQLException {
+        return orders.stream().anyMatch(o -> o.getItems().stream().anyMatch(i -> i.getProductId().equals(productId)));
+    }
+
+    @Override
+    public boolean updateProduct(String oldId, Product product) throws SQLException {
+        removeProduct(oldId);
+        addProduct(product);
+        return true;
+    }
+
+    @Override
+    public boolean removeProduct(String id) throws SQLException { 
+        return products.removeIf(p -> p.getId().equals(id)); 
+    }
+
     public void addOrder(Order order) { orders.add(order); }
-    public void removeCategory(String id) { categories.removeIf(c -> c.getId().equals(id)); }
-    public void removeProduct(String id) { products.removeIf(p -> p.getId().equals(id)); }
-    
-    public void updateCategory(Category category) {
-        for (int i = 0; i < categories.size(); i++) {
-            if (categories.get(i).getId().equals(category.getId())) {
-                categories.set(i, category);
-                return;
-            }
-        }
-    }
-    
-    public void updateProduct(Product product) {
-        for (int i = 0; i < products.size(); i++) {
-            if (products.get(i).getId().equals(product.getId())) {
-                products.set(i, product);
-                return;
-            }
-        }
-    }
 }

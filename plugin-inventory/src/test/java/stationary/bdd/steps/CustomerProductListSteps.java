@@ -11,6 +11,7 @@ import stationary.store.InMemoryStore;
 
 import java.util.List;
 import java.util.Optional;
+import stationary.store.SqlServerStore;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -22,11 +23,13 @@ public class CustomerProductListSteps {
 
     @io.cucumber.java.Before
     public void setupCart() {
+        catalogControl.setStore(InMemoryStore.getInstance());
+        orderControl.setCatalogControl(catalogControl);
         orderControl.checkout();
     }
 
     @Given("Hệ thống đã nạp dữ liệu mẫu")
-    public void he_thong_da_nap_du_lieu_mau() {
+    public void he_thong_da_nap_du_lieu_mau() throws Exception {
         InMemoryStore store = InMemoryStore.getInstance();
         store.clear();
         store.addCategory(new Category("C1", "Bìa - Kệ hồ sơ", "📁"));
@@ -45,7 +48,7 @@ public class CustomerProductListSteps {
     }
 
     @When("tôi nhấp vào thẻ bài {string}")
-    public void toi_nhap_vao_the_bai(String categoryName) {
+    public void toi_nhap_vao_the_bai(String categoryName) throws Throwable {
         Optional<Category> cat = InMemoryStore.getInstance().getCategories().stream()
                 .filter(c -> c.getName().equals(categoryName))
                 .findFirst();
@@ -80,7 +83,7 @@ public class CustomerProductListSteps {
     }
 
     @When("tôi click Thêm vào giỏ hàng cho sản phẩm {string}")
-    public void toi_click_them_vao_gio_hang(String productName) {
+    public void toi_click_them_vao_gio_hang(String productName) throws Exception {
         Optional<Product> p = InMemoryStore.getInstance().getProducts().stream()
                 .filter(prod -> prod.getName().equals(productName))
                 .findFirst();

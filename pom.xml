@@ -11,10 +11,11 @@
     <modules>
         <module>stationary-core</module>
         <module>plugin-inventory</module>
-
+        <module>plugin-cart</module>
         <module>plugin-order</module>
         <module>plugin-notify</module>
-        <module>plugin-user</module>
+        <module>plugin-auth</module>
+        <module>plugin-user-management</module>
         <module>plugin-ecommerce</module>
     </modules>
     <properties>
@@ -70,6 +71,11 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>mssql-jdbc</artifactId>
+            <version>12.2.0.jre8</version>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
@@ -85,7 +91,6 @@
                     <encoding>UTF-8</encoding>
                     <source>1.8</source>
                     <target>1.8</target>
-                    <useIncrementalCompilation>false</useIncrementalCompilation>
                 </configuration>
             </plugin>
             <plugin>

@@ -8,15 +8,24 @@ import static spark.Spark.*;
 
 public class MainApp {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         port(4567);
         staticFiles.location("/public");
         
-        System.out.println("Starting Stationary Core...");
+        System.out.println("Starting Stationary Core Modular System...");
+        
+        // Initialize JDBC Database Manager
+        try {
+            Class.forName("stationary.core.db.DbConnectionManager");
+        } catch (ClassNotFoundException e) {
+            System.err.println("DbConnectionManager not found!");
+        }
         
         initPlugins();
         
+        awaitInitialization();
         System.out.println("System Initialized! Go to http://localhost:4567");
+        Thread.sleep(Long.MAX_VALUE); // Block the main thread to keep server running
     }
 
     public static int initPlugins() {
